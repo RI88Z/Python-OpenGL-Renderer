@@ -7,31 +7,26 @@ from model import Model
 from shader import Shader
 from window import Window
 
-# Zmienne globalne do obsługi myszy (wymagane ze względu na charakter callbacków GLFW)
+# Globalne
 camera = Camera(position=glm.vec3(0.0, 0.0, 5.0))
-last_x, last_y = 640, 360  # Środek ekranu dla 1280x720
+last_x, last_y = 640, 360
 first_mouse = True
+current_shader_type = "PHONG"
 
 
 def mouse_callback(window, xpos, ypos):
     global first_mouse, last_x, last_y
-
     if first_mouse:
-        last_x = xpos
-        last_y = ypos
+        last_x, last_y = xpos, ypos
         first_mouse = False
-
     xoffset = xpos - last_x
-    yoffset = last_y - ypos  # Odwrócone, ponieważ Y rośnie w dół ekranu
-
-    last_x = xpos
-    last_y = ypos
-
+    yoffset = last_y - ypos
+    last_x, last_y = xpos, ypos
     camera.process_mouse_movement(xoffset, yoffset)
 
 
 def process_input(window, delta_time):
-    """Obsługa klawiatury (WSAD + Escape)."""
+    global current_shader_type
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
         glfw.set_window_should_close(window, True)
 
@@ -44,73 +39,70 @@ def process_input(window, delta_time):
     if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS:
         camera.process_keyboard("RIGHT", delta_time)
 
+    if glfw.get_key(window, glfw.KEY_1) == glfw.PRESS:
+        current_shader_type = "PHONG"
+    if glfw.get_key(window, glfw.KEY_2) == glfw.PRESS:
+        current_shader_type = "GOURAUD"
+    if glfw.get_key(window, glfw.KEY_3) == glfw.PRESS:
+        current_shader_type = "TOON"
+
 
 def main():
-    app_window = Window(1280, 720, "Obj Viewer - Etap 1: Architektura")
-
-    # Rejestracja zdarzenia myszy
+    app_window = Window(1280, 720, "Przeglądarka Modeli 3D - Klawisze 1, 2, 3")
     glfw.set_cursor_pos_callback(app_window.window, mouse_callback)
-
-    # Włączamy test głębokości (Z-Buffer), absolutnie krytyczne dla grafiki 3D
     glEnable(GL_DEPTH_TEST)
 
-    # Trywialny shader testowy przepuszczający geometrię i malujący ją na pomarańczowo
-    test_vertex_shader = """
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    uniform mat4 model;
-    uniform mat4 view;
-    uniform mat4 projection;
-    void main() {
-        gl_Position = projection * view * model * vec4(aPos, 1.0);
+    # Inicjalizacja Shaderów z plików
+    shaders = {
+        "PHONG": Shader("shaders/phong.vert", "shaders/phong.frag"),
+        "GOURAUD": Shader("shaders/gouraud.vert", "shaders/gouraud.frag"),
+        "TOON": Shader("shaders/toon.vert", "shaders/toon.frag"),
     }
-    """
 
-    test_fragment_shader = """
-    #version 330 core
-    out vec4 FragColor;
-    void main() {
-        FragColor = vec4(1.0, 0.5, 0.2, 1.0);
-    }
-    """
+    my_model = Model("cube.obj", diffuse_path="diffuse.jpg")
 
-    shader = Shader(test_vertex_shader, test_fragment_shader)
+    light_pos = glm.vec3(1.2, 1.0, 2.0)
+    light_color = glm.vec3(1.0, 1.0, 1.0)
 
-    delta_time = 0.0
     last_frame = 0.0
 
-    my_model = Model("cube.obj", diffuse_path="diffuse.jpg", specular_path=None)
+    print("--- System Uruchomiony ---")
+    print("Klawisze 1-3: Zmiana cieniowania")
+    print("WSAD: Ruch, Mysz: Rozglądanie")
 
-    # --- PĘTLA RENDEROWANIA ---
     while app_window.is_open():
-        # Obliczenie czasu klatki (delta_time)
         current_frame = glfw.get_time()
         delta_time = current_frame - last_frame
         last_frame = current_frame
 
-        # Wejście
         process_input(app_window.window, delta_time)
 
-        # Renderowanie (czyszczenie buforów koloru i głębokości)
-        glClearColor(0.15, 0.15, 0.15, 1.0)
+        glClearColor(0.1, 0.1, 0.1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        # Aktywacja shadera
-        shader.use()
+        active_shader = shaders[current_shader_type]
+        active_shader.use()
 
-        # Obliczanie macierzy widoku i rzutowania
+        # Macierze
         projection = camera.get_projection_matrix(app_window.width, app_window.height)
         view = camera.get_view_matrix()
-        model = glm.mat4(1.0)  # Na ten moment macierz tożsamościowa
+        model_mat = glm.mat4(1.0)
+        # Opcjonalnie: obracanie modelu w czasie
+        model_mat = glm.rotate(
+            model_mat, float(glfw.get_time()) * 0.5, glm.vec3(0.0, 1.0, 0.0)
+        )
 
-        # Przesyłanie uniformów
-        shader.set_mat4("projection", projection)
-        shader.set_mat4("view", view)
-        shader.set_mat4("model", model)
+        active_shader.set_mat4("projection", projection)
+        active_shader.set_mat4("view", view)
+        active_shader.set_mat4("model", model_mat)
 
-        my_model.draw(shader)
+        # Światło
+        active_shader.set_vec3("lightPos", light_pos)
+        active_shader.set_vec3("lightColor", light_color)
+        active_shader.set_vec3("viewPos", camera.position)
 
-        # Wymiana buforów i obsługa zdarzeń okna
+        my_model.draw(active_shader)
+
         app_window.swap_buffers_and_poll()
 
     app_window.terminate()

@@ -6,6 +6,12 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 class Shader:
     def __init__(self, vertex_src: str, fragment_src: str):
         """Kompiluje shadery i linkuje je w program."""
+        # Odczyt kodu z plików
+        with open(vertex_path, "r") as f:
+            vertex_src = f.read()
+        with open(fragment_path, "r") as f:
+            fragment_src = f.read()
+
         self.ID = self._compile_and_link(vertex_src, fragment_src)
 
     def _compile_and_link(self, v_src, f_src):
