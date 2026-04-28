@@ -4,7 +4,7 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 
 
 class Shader:
-    def __init__(self, vertex_src: str, fragment_src: str):
+    def __init__(self, vertex_path: str, fragment_path: str):
         """Kompiluje shadery i linkuje je w program."""
         # Odczyt kodu z plików
         with open(vertex_path, "r") as f:
