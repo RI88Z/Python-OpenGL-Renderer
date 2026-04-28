@@ -3,6 +3,7 @@ import glm
 from OpenGL.GL import *
 
 from camera import Camera
+from model import Model
 from shader import Shader
 from window import Window
 
@@ -78,6 +79,8 @@ def main():
     delta_time = 0.0
     last_frame = 0.0
 
+    my_model = Model("cube.obj", diffuse_path="diffuse.jpg", specular_path=None)
+
     # --- PĘTLA RENDEROWANIA ---
     while app_window.is_open():
         # Obliczenie czasu klatki (delta_time)
@@ -105,7 +108,7 @@ def main():
         shader.set_mat4("view", view)
         shader.set_mat4("model", model)
 
-        # Tutaj będzie rysowanie VAO
+        my_model.draw(shader)
 
         # Wymiana buforów i obsługa zdarzeń okna
         app_window.swap_buffers_and_poll()
