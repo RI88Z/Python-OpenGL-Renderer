@@ -18,7 +18,6 @@ void main() {
     vec3 lightDir = normalize(lightPos - FragPos);
     float intensity = max(dot(norm, lightDir), 0.0);
     
-    // Cel-shading (progowanie)
     float bands = 4.0;
     float quantizedIntensity = ceil(intensity * bands) / bands;
     if (quantizedIntensity < 0.1) quantizedIntensity = 0.1;
