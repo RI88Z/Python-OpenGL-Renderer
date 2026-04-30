@@ -5,8 +5,6 @@ from OpenGL.GL.shaders import compileProgram, compileShader
 
 class Shader:
     def __init__(self, vertex_path: str, fragment_path: str):
-        """Kompiluje shadery i linkuje je w program."""
-        # Odczyt kodu z plików
         with open(vertex_path, "r") as f:
             vertex_src = f.read()
         with open(fragment_path, "r") as f:
@@ -15,24 +13,19 @@ class Shader:
         self.ID = self._compile_and_link(vertex_src, fragment_src)
 
     def _compile_and_link(self, v_src, f_src):
-        # Kompilacja Shaderów
         vertex_shader = compileShader(v_src, GL_VERTEX_SHADER)
         fragment_shader = compileShader(f_src, GL_FRAGMENT_SHADER)
 
-        # Linkowanie programu
-        shader_program = compileProgram(vertex_shader, fragment_shader)
+        shader_program = compileProgram(vertex_shader, fragment_shader, validate=False)
 
-        # Czyszczenie pamięci (shadery są już w programie)
-        glDeleteShader(vertex_shader)
-        glDeleteShader(fragment_shader)
+        # glDeleteShader(vertex_shader)
+        # glDeleteShader(fragment_shader)
 
         return shader_program
 
     def use(self):
-        """Aktywuje program shadera."""
         glUseProgram(self.ID)
 
-    # --- Metody ustawiające Uniformy ---
     def set_int(self, name: str, value: int):
         glUniform1i(glGetUniformLocation(self.ID, name), value)
 

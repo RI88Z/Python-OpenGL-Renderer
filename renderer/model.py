@@ -2,7 +2,7 @@ import numpy as np
 from OpenGL.GL import *
 from PIL import Image
 
-from mesh import Mesh
+from .mesh import Mesh
 
 
 class Model:
@@ -18,10 +18,9 @@ class Model:
         vertex_data = []
         indices = []
 
-        # Słownik pomagający unikać duplikatów wierzchołków
         unique_vertices = {}
 
-        print(f"Ładowanie modelu: {path}...")
+        print(f"Loading model: {path}...")
         with open(path, "r") as f:
             for line in f:
                 parts = line.strip().split()
@@ -35,7 +34,6 @@ class Model:
                 elif parts[0] == "vn":
                     temp_normals.append([float(x) for x in parts[1:4]])
                 elif parts[0] == "f":
-                    # Odczyt ścianek i prosta triangulacja (rozbicie wielokątów na trójkąty)
                     face_vertices = parts[1:]
                     for i in range(1, len(face_vertices) - 1):
                         triangle = [
@@ -46,7 +44,6 @@ class Model:
 
                         for vertex_str in triangle:
                             if vertex_str not in unique_vertices:
-                                # v/vt/vn -> obsługujemy brakujące dane
                                 v_idx, vt_idx, vn_idx = [
                                     int(x) - 1 if x else -1
                                     for x in (vertex_str + "//").split("/")[:3]
@@ -72,7 +69,6 @@ class Model:
         np_vertices = np.array(vertex_data, dtype=np.float32)
         np_indices = np.array(indices, dtype=np.uint32)
 
-        # Ładowanie tekstur
         textures = []
         if diffuse_path:
             diff_id = self._load_texture(diffuse_path)
@@ -81,15 +77,13 @@ class Model:
             spec_id = self._load_texture(specular_path)
             textures.append({"id": spec_id, "type": "texture_specular"})
 
-        # Utworzenie i dodanie siatki
         self.meshes.append(Mesh(np_vertices, np_indices, textures))
-        print("Model załadowany pomyślnie!")
+        print("Model loaded successfully.")
 
     def _load_texture(self, path):
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
-        # Ustawienia powtarzania i filtrowania tekstury
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
@@ -97,9 +91,7 @@ class Model:
 
         try:
             img = Image.open(path)
-            # OpenGL oczekuje, że początek osi Y (0.0) znajduje się na dole obrazka. Pillow czyta od góry.
             img = img.transpose(Image.FLIP_TOP_BOTTOM)
-            # Konwersja do RGBA ułatwia sprawę - zawsze mamy 4 kanały
             img_data = img.convert("RGBA").tobytes()
 
             glTexImage2D(
@@ -114,9 +106,9 @@ class Model:
                 img_data,
             )
             glGenerateMipmap(GL_TEXTURE_2D)
-            print(f"Załadowano teksturę: {path}")
+            print(f"Loaded texture: {path}")
         except Exception as e:
-            print(f"Błąd ładowania tekstury {path}: {e}")
+            print(f"Failed to load texture {path}: {e}")
 
         return texture_id
 
