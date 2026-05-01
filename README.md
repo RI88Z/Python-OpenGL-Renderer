@@ -1,6 +1,6 @@
 # Python OpenGL Renderer
 
-Simple 3D model viewer in Python + OpenGL. View a model with different shading styles: Phong, Gouraud and toon.
+A 3D model viewer built with Python and OpenGL, featuring multiple light sources and custom GLSL shaders (Phong, Gouraud, Toon).
 
 ## Setup and run
 
