@@ -4,11 +4,20 @@ A 3D model viewer built with Python and OpenGL, featuring multiple light sources
 
 ## Setup and run
 
+- 'classic' venv
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python main.py
+```
+
+- uv
+```bash
+# install uv on your machine
+uv sync
+source .venv/bin/activate
+uv run main.py
 ```
 
 ## Controls
