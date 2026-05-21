@@ -59,7 +59,6 @@ def main():
         diffuse_path="assets/textures/diffuse.jpg",
     )
 
-    light_pos = glm.vec3(1.2, 1.0, 2.0)
     light_color = glm.vec3(1.0, 1.0, 1.0)
 
     last_frame = 0.0
@@ -91,6 +90,8 @@ def main():
         active_shader.set_mat4("view", view)
         active_shader.set_mat4("model", model_mat)
 
+        t = glfw.get_time()
+        light_pos = glm.vec3(2.0 * glm.sin(t), 1.0, 2.0 * glm.cos(t))
         active_shader.set_vec3("lightPos", light_pos)
         active_shader.set_vec3("lightColor", light_color)
         active_shader.set_vec3("viewPos", camera.position)
