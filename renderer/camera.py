@@ -21,6 +21,8 @@ class Camera:
         self.movement_speed = 2.5
         self.mouse_sensitivity = 0.1
         self.fov = 45.0
+        self.near = 0.1
+        self.far = 100.0
 
         self.update_camera_vectors()
 
@@ -28,7 +30,9 @@ class Camera:
         return glm.lookAt(self.position, self.position + self.front, self.up)
 
     def get_projection_matrix(self, width, height):
-        return glm.perspective(glm.radians(self.fov), width / height, 0.1, 100.0)
+        return glm.perspective(
+            glm.radians(self.fov), width / height, self.near, self.far
+        )
 
     def process_keyboard(self, direction, delta_time):
         velocity = self.movement_speed * delta_time
