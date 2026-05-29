@@ -56,10 +56,11 @@ def parse_args():
     texture.add_argument("--specular", default=None, help="specular texture path")
 
     light = parser.add_argument_group("Lights")
+    # placeholder
     light.add_argument(
         "--light",
-        choices=("none", "point", "directional", "spot"),
-        default="point",
+        choices=("NONE", "POINT", "DIRECTIONAL", "SPOT"),
+        default="POINT",
         help="light type",
     )
     light.add_argument(
@@ -68,13 +69,14 @@ def parse_args():
         type=float,
         metavar=("X", "Y", "Z"),
         default=[1.2, 1.0, 2.0],
-        help="Pozycja światła (point/spot)",
+        help="light position",
     )
     # TODO: dodac opcje kierunku swiatla do directional
     light.add_argument(
         "--light-color",
         nargs=3,
         type=float,
+        metavar=("R", "G", "B"),
         default=[1.0, 1.0, 1.0],
         help="light color",
     )
@@ -90,7 +92,7 @@ def parse_args():
     )
     cam_group.add_argument("--speed", type=float, default=2.5, help="camera speed")
     cam_group.add_argument("--fov", type=float, default=45.0, help="field of view")
-    cam_group.add_argument("--far", type=float, default=1000.0, help="camera far arg")
+    cam_group.add_argument("--far", type=float, default=1000.0, help="far clipping")
 
     s = parser.add_argument_group("Shaders")
     s.add_argument(
