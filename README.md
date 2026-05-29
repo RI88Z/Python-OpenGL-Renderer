@@ -2,14 +2,13 @@
 
 A 3D model viewer built with Python and OpenGL, featuring multiple light sources and custom GLSL shaders (Phong, Gouraud, Toon).
 
-## Setup and run
+## Setup
 
 - 'classic' venv
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python main.py
 ```
 
 - uv
@@ -17,7 +16,17 @@ python main.py
 # install uv on your machine
 uv sync
 source .venv/bin/activate
-uv run main.py
+```
+
+## Run example
+
+```bash
+python main.py \
+  --model assets/models/cube.obj \
+  --diffuse assets/textures/diffuse.jpg \
+  --cam-pos 2 2 2 \
+  --speed 20 \
+  --far 100
 ```
 
 ## Controls
