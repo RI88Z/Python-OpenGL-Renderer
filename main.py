@@ -27,6 +27,19 @@ def mouse_callback(window, xpos, ypos):
     camera.process_mouse_movement(xoffset, yoffset)
 
 
+def key_callback(window, key, scancode, action, mods):
+    if action != glfw.PRESS:
+        return
+    if key == glfw.KEY_L:
+        lights.add(Light(position=glm.vec3(camera.position)))
+    elif key == glfw.KEY_K:
+        lights.remove_selected()
+    elif key == glfw.KEY_N:
+        lights.select_next()
+    elif key == glfw.KEY_T:
+        lights.cycle_type()
+
+
 def process_input(window, delta_time):
     global current_shader_type
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
@@ -47,6 +60,22 @@ def process_input(window, delta_time):
         current_shader_type = "GOURAUD"
     if glfw.get_key(window, glfw.KEY_3) == glfw.PRESS:
         current_shader_type = "TOON"
+
+    move = glm.vec3(0.0, 0.0, 0.0)
+    if glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS:
+        move.x -= 1.0
+    if glfw.get_key(window, glfw.KEY_RIGHT) == glfw.PRESS:
+        move.x += 1.0
+    if glfw.get_key(window, glfw.KEY_UP) == glfw.PRESS:
+        move.z -= 1.0
+    if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
+        move.z += 1.0
+    if glfw.get_key(window, glfw.KEY_R) == glfw.PRESS:
+        move.y += 1.0
+    if glfw.get_key(window, glfw.KEY_F) == glfw.PRESS:
+        move.y -= 1.0
+    if glm.length(move) > 0.0:
+        lights.move_selected(move * delta_time * 2.0)
 
 
 def parse_args():
@@ -126,6 +155,7 @@ def main():
     current_shader_type = args.shader
     app_window = Window(args.width, args.height, "3D Model Viewer - keys 1, 2, 3")
     glfw.set_cursor_pos_callback(app_window.window, mouse_callback)
+    glfw.set_key_callback(app_window.window, key_callback)
     glEnable(GL_DEPTH_TEST)
 
     shaders = {
@@ -156,6 +186,8 @@ def main():
 
     print("Keys 1-3: switch shading model (Phong/Gouraud/Toon)")
     print("WSAD: move, Mouse: look around")
+    print("L: add light, K: remove light, N: next light, T: change light type")
+    print("Arrows + R/F: move selected light")
 
     while app_window.is_open():
         current_frame = glfw.get_time()
