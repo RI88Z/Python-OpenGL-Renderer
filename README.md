@@ -38,6 +38,8 @@ python main.py \
 - `--light-dir X Y Z` - light direction (directional and spot)
 - `--light-color R G B` - light color
 
+Each light is drawn as a small cube. The bigger white cube is the selected light.
+
 ## Controls
 
 - `W/A/S/D` - move the camera
@@ -47,5 +49,6 @@ python main.py \
 - `K` - remove the selected light
 - `N` - select the next light
 - `T` - change the type of the selected light
-- Arrows + `R/F` - move the selected light
+- Arrows - move the selected light on X/Z
+- `E` / `Q` - move the selected light up / down
 - `ESC` - quit
