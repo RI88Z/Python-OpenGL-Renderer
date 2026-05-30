@@ -1,7 +1,27 @@
 import ctypes
 
 import numpy as np
-from OpenGL.GL import *
+from OpenGL.GL import (
+    glGenVertexArrays,
+    glGenBuffers,
+    glBindVertexArray,
+    glBindBuffer,
+    glBufferData,
+    glActiveTexture,
+    glBindTexture,
+    glDrawElements,
+    glEnableVertexAttribArray,
+    glVertexAttribPointer,
+    GL_ARRAY_BUFFER,
+    GL_STATIC_DRAW,
+    GL_ELEMENT_ARRAY_BUFFER,
+    GL_FLOAT,
+    GL_FALSE,
+    GL_TEXTURE0,
+    GL_TEXTURE_2D,
+    GL_TRIANGLES,
+    GL_UNSIGNED_INT,
+)
 
 
 class Mesh:

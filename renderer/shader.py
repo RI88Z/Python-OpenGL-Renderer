@@ -1,6 +1,16 @@
 import glm
-from OpenGL.GL import *
 from OpenGL.GL.shaders import compileProgram, compileShader
+from OpenGL.GL import (
+    glUseProgram,
+    glUniform1i,
+    glUniform1f,
+    glUniform3fv,
+    glUniformMatrix4fv,
+    glGetUniformLocation,
+    GL_FALSE,
+    GL_VERTEX_SHADER,
+    GL_FRAGMENT_SHADER,
+)
 
 
 class Shader:

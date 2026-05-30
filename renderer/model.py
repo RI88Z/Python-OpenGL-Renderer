@@ -1,6 +1,23 @@
 import numpy as np
-from OpenGL.GL import *
 from PIL import Image
+from OpenGL.GL import (
+    glTexParameteri,
+    glBindTexture,
+    glGenTextures,
+    glGenerateMipmap,
+    glTexImage2D,
+    GL_TEXTURE_2D,
+    GL_TEXTURE_WRAP_S,
+    GL_TEXTURE_WRAP_T,
+    GL_TEXTURE_MIN_FILTER,
+    GL_LINEAR_MIPMAP_LINEAR,
+    GL_TEXTURE_MAG_FILTER,
+    GL_LINEAR,
+    GL_REPEAT,
+    GL_RGBA,
+    GL_UNSIGNED_BYTE,
+)
+
 
 from .mesh import Mesh
 

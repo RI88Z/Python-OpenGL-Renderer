@@ -1,7 +1,7 @@
 import sys
 
 import glfw
-from OpenGL.GL import *
+from OpenGL.GL import glViewport
 
 
 class Window:
