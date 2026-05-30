@@ -1,4 +1,6 @@
 import argparse
+from dataclasses import dataclass
+from functools import partial
 
 import glfw
 import glm
@@ -7,75 +9,92 @@ from OpenGL.GL import *
 from renderer import Camera, Light, LightManager, Model, Shader, Window
 from renderer.light import DIRECTIONAL, POINT, SPOT
 
-camera = Camera(position=glm.vec3(0.0, 0.0, 5.0))
-lights = LightManager()
-last_x, last_y = 640, 360
-first_mouse = True
-current_shader_type = "PHONG"
+
+@dataclass
+class AppState:
+    camera: Camera
+    lights: LightManager
+    last_x: float = 640
+    last_y: float = 360
+    first_mouse: bool = True
+    current_shader_type: str = "PHONG"
+    toon_bands: int = 4
+    prev_right_bracket_pressed: bool = False
+    prev_left_bracket_pressed: bool = False
+
 
 LIGHT_TYPES = {"POINT": POINT, "DIRECTIONAL": DIRECTIONAL, "SPOT": SPOT}
 LIGHT_NAMES = ("POINT", "DIRECTIONAL", "SPOT")
 
 
-def log_selected():
-    if not lights.lights:
+def log_selected(state):
+    if not state.lights.lights:
         print("No lights")
         return
-    light = lights.lights[lights.selected]
+    light = state.lights.lights[state.lights.selected]
     p = light.position
     print(
-        f"Light {lights.selected + 1}/{len(lights.lights)}: "
+        f"Light {state.lights.selected + 1}/{len(state.lights.lights)}: "
         f"{LIGHT_NAMES[light.type]} at ({p.x:.1f}, {p.y:.1f}, {p.z:.1f})"
     )
 
 
-def mouse_callback(window, xpos, ypos):
-    global first_mouse, last_x, last_y
-    if first_mouse:
-        last_x, last_y = xpos, ypos
-        first_mouse = False
-    xoffset = xpos - last_x
-    yoffset = last_y - ypos
-    last_x, last_y = xpos, ypos
-    camera.process_mouse_movement(xoffset, yoffset)
+def mouse_callback(state, window, xpos, ypos):
+    if state.first_mouse:
+        state.last_x, state.last_y = xpos, ypos
+        state.first_mouse = False
+    xoffset = xpos - state.last_x
+    yoffset = state.last_y - ypos
+    state.last_x, state.last_y = xpos, ypos
+    state.camera.process_mouse_movement(xoffset, yoffset)
 
 
-def key_callback(window, key, scancode, action, mods):
+def key_callback(state, window, key, scancode, action, mods):
     if action != glfw.PRESS:
         return
     if key == glfw.KEY_L:
-        lights.add(Light(position=glm.vec3(camera.position)))
+        state.lights.add(Light(position=glm.vec3(state.camera.position)))
     elif key == glfw.KEY_K:
-        lights.remove_selected()
+        state.lights.remove_selected()
     elif key == glfw.KEY_N:
-        lights.select_next()
+        state.lights.select_next()
     elif key == glfw.KEY_T:
-        lights.cycle_type()
+        state.lights.cycle_type()
     else:
         return
-    log_selected()
+    log_selected(state)
 
 
-def process_input(window, delta_time):
-    global current_shader_type
+def process_input(state, window, delta_time):
     if glfw.get_key(window, glfw.KEY_ESCAPE) == glfw.PRESS:
         glfw.set_window_should_close(window, True)
 
     if glfw.get_key(window, glfw.KEY_W) == glfw.PRESS:
-        camera.process_keyboard("FORWARD", delta_time)
+        state.camera.process_keyboard("FORWARD", delta_time)
     if glfw.get_key(window, glfw.KEY_S) == glfw.PRESS:
-        camera.process_keyboard("BACKWARD", delta_time)
+        state.camera.process_keyboard("BACKWARD", delta_time)
     if glfw.get_key(window, glfw.KEY_A) == glfw.PRESS:
-        camera.process_keyboard("LEFT", delta_time)
+        state.camera.process_keyboard("LEFT", delta_time)
     if glfw.get_key(window, glfw.KEY_D) == glfw.PRESS:
-        camera.process_keyboard("RIGHT", delta_time)
+        state.camera.process_keyboard("RIGHT", delta_time)
 
     if glfw.get_key(window, glfw.KEY_1) == glfw.PRESS:
-        current_shader_type = "PHONG"
+        state.current_shader_type = "PHONG"
     if glfw.get_key(window, glfw.KEY_2) == glfw.PRESS:
-        current_shader_type = "GOURAUD"
+        state.current_shader_type = "GOURAUD"
     if glfw.get_key(window, glfw.KEY_3) == glfw.PRESS:
-        current_shader_type = "TOON"
+        state.current_shader_type = "TOON"
+
+    rb = glfw.get_key(window, glfw.KEY_RIGHT_BRACKET) == glfw.PRESS
+    lb = glfw.get_key(window, glfw.KEY_LEFT_BRACKET) == glfw.PRESS
+    if rb and not state.prev_right_bracket_pressed:
+        state.toon_bands = min(16, state.toon_bands + 1)
+        print(f"Toon bands: {state.toon_bands}")
+    if lb and not state.prev_left_bracket_pressed:
+        state.toon_bands = max(1, state.toon_bands - 1)
+        print(f"Toon bands: {state.toon_bands}")
+    state.prev_right_bracket_pressed = rb
+    state.prev_left_bracket_pressed = lb
 
     move = glm.vec3(0.0, 0.0, 0.0)
     if glfw.get_key(window, glfw.KEY_LEFT) == glfw.PRESS:
@@ -91,7 +110,7 @@ def process_input(window, delta_time):
     if glfw.get_key(window, glfw.KEY_Q) == glfw.PRESS:
         move.y -= 1.0
     if glm.length(move) > 0.0:
-        lights.move_selected(move * delta_time * 2.0)
+        state.lights.move_selected(move * delta_time * 2.0)
 
 
 def parse_args():
@@ -167,11 +186,14 @@ def parse_args():
 def main():
     args = parse_args()
 
-    global current_shader_type
-    current_shader_type = args.shader
+    state = AppState(
+        camera=Camera(position=glm.vec3(0.0, 0.0, 5.0)),
+        lights=LightManager(),
+        current_shader_type=args.shader,
+    )
     app_window = Window(args.width, args.height, "3D Model Viewer - keys 1, 2, 3")
-    glfw.set_cursor_pos_callback(app_window.window, mouse_callback)
-    glfw.set_key_callback(app_window.window, key_callback)
+    glfw.set_cursor_pos_callback(app_window.window, partial(mouse_callback, state))
+    glfw.set_key_callback(app_window.window, partial(key_callback, state))
     glEnable(GL_DEPTH_TEST)
 
     shaders = {
@@ -181,17 +203,17 @@ def main():
     }
     marker_shader = Shader("shaders/marker.vert", "shaders/marker.frag")
 
-    camera.position = glm.vec3(*args.cam_pos)
-    camera.movement_speed = args.speed
-    camera.fov = args.fov
-    camera.far = args.far
-    camera.update_camera_vectors()
+    state.camera.position = glm.vec3(*args.cam_pos)
+    state.camera.movement_speed = args.speed
+    state.camera.fov = args.fov
+    state.camera.far = args.far
+    state.camera.update_camera_vectors()
 
     my_model = Model(args.model, diffuse_path=args.diffuse, specular_path=args.specular)
     marker_model = Model("assets/models/sphere.obj")
 
     if args.light != "NONE":
-        lights.add(
+        state.lights.add(
             Light(
                 light_type=LIGHT_TYPES[args.light],
                 position=glm.vec3(*args.light_pos),
@@ -213,16 +235,18 @@ def main():
         delta_time = current_frame - last_frame
         last_frame = current_frame
 
-        process_input(app_window.window, delta_time)
+        process_input(state, app_window.window, delta_time)
 
         glClearColor(0.1, 0.1, 0.1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        active_shader = shaders[current_shader_type]
+        active_shader = shaders[state.current_shader_type]
         active_shader.use()
 
-        projection = camera.get_projection_matrix(app_window.width, app_window.height)
-        view = camera.get_view_matrix()
+        projection = state.camera.get_projection_matrix(
+            app_window.width, app_window.height
+        )
+        view = state.camera.get_view_matrix()
         model_mat = glm.mat4(1.0)
         if args.rotate:
             model_mat = glm.rotate(
@@ -232,20 +256,24 @@ def main():
         active_shader.set_mat4("projection", projection)
         active_shader.set_mat4("view", view)
         active_shader.set_mat4("model", model_mat)
-        lights.apply(active_shader)
-        active_shader.set_vec3("viewPos", camera.position)
+        state.lights.apply(active_shader)
+        active_shader.set_vec3("viewPos", state.camera.position)
+        if state.current_shader_type == "TOON":
+            active_shader.set_int("toonBands", state.toon_bands)
 
         my_model.draw(active_shader)
 
         marker_shader.use()
         marker_shader.set_mat4("projection", projection)
         marker_shader.set_mat4("view", view)
-        for i, light in enumerate(lights.lights):
+        for i, light in enumerate(state.lights.lights):
             marker_mat = glm.translate(glm.mat4(1.0), light.position)
-            scale = 0.16 if i == lights.selected else 0.08
+            scale = 0.16 if i == state.lights.selected else 0.08
             marker_mat = glm.scale(marker_mat, glm.vec3(scale, scale, scale))
             marker_shader.set_mat4("model", marker_mat)
-            color = glm.vec3(1.0, 1.0, 1.0) if i == lights.selected else light.color
+            color = (
+                glm.vec3(1.0, 1.0, 1.0) if i == state.lights.selected else light.color
+            )
             marker_shader.set_vec3("markerColor", color)
             marker_model.draw(marker_shader)
 

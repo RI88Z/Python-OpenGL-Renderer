@@ -27,6 +27,7 @@ uniform Material material;
 uniform Light lights[MAX_LIGHTS];
 uniform int numLights;
 uniform vec3 viewPos;
+uniform int toonBands;
 
 vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color) {
     vec3 lightDir;
@@ -48,8 +49,7 @@ vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color) {
     }
 
     float intensity = max(dot(norm, lightDir), 0.0);
-    float bands = 4.0;
-    float quantized = ceil(intensity * bands) / bands;
+    float quantized = ceil(intensity * float(toonBands)) / float(toonBands);
 
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
