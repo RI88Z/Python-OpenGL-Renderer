@@ -80,6 +80,9 @@ class Mesh:
         diffuse_nr = 1
         specular_nr = 1
 
+        has_spec = any(t.get("type") == "texture_specular" for t in self.textures)
+        shader.set_int("hasSpecular", 1 if has_spec else 0)
+
         for i, texture in enumerate(self.textures):
             glActiveTexture(GL_TEXTURE0 + i)
             name = texture["type"]

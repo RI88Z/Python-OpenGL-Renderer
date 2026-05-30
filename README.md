@@ -24,6 +24,7 @@ source .venv/bin/activate
 python main.py \
   --model assets/models/cube.obj \
   --diffuse assets/textures/diffuse.jpg \
+  --specular assets/textures/specMap_cube2.png \
   --light POINT \
   --light-pos 1.2 1 2 \
   --cam-pos 2 2 2 \

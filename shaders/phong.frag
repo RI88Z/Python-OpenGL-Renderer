@@ -7,6 +7,7 @@ in vec2 TexCoords;
 
 struct Material {
     sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
 };
 
 struct Light {
@@ -27,8 +28,9 @@ uniform Material material;
 uniform Light lights[MAX_LIGHTS];
 uniform int numLights;
 uniform vec3 viewPos;
+uniform int hasSpecular;
 
-vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color) {
+vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color, float specMap) {
     vec3 lightDir;
     float attenuation = 1.0;
     float intensity = 1.0;
@@ -49,11 +51,11 @@ vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color) {
 
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 16.0);
 
     vec3 ambient = 0.2 * light.color * color;
     vec3 diffuse = diff * light.color * color;
-    vec3 specular = 0.5 * spec * light.color;
+    vec3 specular = 0.5 * spec * specMap * light.color;
 
     return (ambient + (diffuse + specular) * intensity) * attenuation;
 }
@@ -62,10 +64,14 @@ void main() {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 color = vec3(texture(material.texture_diffuse1, TexCoords));
+    float specMap = 1.0;
+    if (hasSpecular == 1) {
+        specMap = texture(material.texture_specular1, TexCoords).r;
+    }
 
     vec3 result = vec3(0.0);
     for (int i = 0; i < numLights; i++) {
-        result += calcLight(lights[i], norm, viewDir, color);
+        result += calcLight(lights[i], norm, viewDir, color, specMap);
     }
 
     FragColor = vec4(result, 1.0);

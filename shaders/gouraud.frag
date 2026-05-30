@@ -5,6 +5,7 @@ in vec3 LightingColor;
 
 struct Material {
     sampler2D texture_diffuse1;
+    sampler2D texture_specular1;
 };
 uniform Material material;
 

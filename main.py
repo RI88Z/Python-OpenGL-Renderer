@@ -64,6 +64,9 @@ def main():
     last_frame = 0.0
 
     print("Keys 1-3: switch shading model (Phong/Gouraud/Toon)")
+    print(
+        "If Toon Shader is selected use '[' key to level down and ']' key to level up"
+    )
     print("WSAD: move, Mouse: look around")
     print("L: add light, K: remove light, N: next light, T: change light type")
     print("Arrows: move light on X/Z, E/Q: move light up/down")
