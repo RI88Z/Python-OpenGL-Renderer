@@ -188,7 +188,7 @@ def main():
     camera.update_camera_vectors()
 
     my_model = Model(args.model, diffuse_path=args.diffuse, specular_path=args.specular)
-    marker_model = Model("assets/models/cube.obj")
+    marker_model = Model("assets/models/sphere.obj")
 
     if args.light != "NONE":
         lights.add(

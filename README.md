@@ -38,7 +38,7 @@ python main.py \
 - `--light-dir X Y Z` - light direction (directional and spot)
 - `--light-color R G B` - light color
 
-Each light is drawn as a small cube. The bigger white cube is the selected light.
+Each light is drawn as a small sphere. The bigger white sphere is the selected light.
 
 ## Controls
 
