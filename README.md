@@ -24,14 +24,28 @@ source .venv/bin/activate
 python main.py \
   --model assets/models/cube.obj \
   --diffuse assets/textures/diffuse.jpg \
+  --light POINT \
+  --light-pos 1.2 1 2 \
   --cam-pos 2 2 2 \
   --speed 20 \
   --far 100
 ```
+
+## Lights
+
+- `--light` - light type: `NONE`, `POINT`, `DIRECTIONAL` or `SPOT`
+- `--light-pos X Y Z` - light position (point and spot)
+- `--light-dir X Y Z` - light direction (directional and spot)
+- `--light-color R G B` - light color
 
 ## Controls
 
 - `W/A/S/D` - move the camera
 - Mouse - look around
 - `1/2/3` - Phong/Gouraud/toon shading
+- `L` - add a light at the camera position
+- `K` - remove the selected light
+- `N` - select the next light
+- `T` - change the type of the selected light
+- Arrows + `R/F` - move the selected light
 - `ESC` - quit
