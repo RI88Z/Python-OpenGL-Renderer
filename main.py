@@ -4,12 +4,16 @@ import glfw
 import glm
 from OpenGL.GL import *
 
-from renderer import Camera, Model, Shader, Window
+from renderer import Camera, Light, LightManager, Model, Shader, Window
+from renderer.light import DIRECTIONAL, POINT, SPOT
 
 camera = Camera(position=glm.vec3(0.0, 0.0, 5.0))
+lights = LightManager()
 last_x, last_y = 640, 360
 first_mouse = True
 current_shader_type = "PHONG"
+
+LIGHT_TYPES = {"POINT": POINT, "DIRECTIONAL": DIRECTIONAL, "SPOT": SPOT}
 
 
 def mouse_callback(window, xpos, ypos):
@@ -56,7 +60,6 @@ def parse_args():
     texture.add_argument("--specular", default=None, help="specular texture path")
 
     light = parser.add_argument_group("Lights")
-    # placeholder
     light.add_argument(
         "--light",
         choices=("NONE", "POINT", "DIRECTIONAL", "SPOT"),
@@ -71,7 +74,14 @@ def parse_args():
         default=[1.2, 1.0, 2.0],
         help="light position",
     )
-    # TODO: dodac opcje kierunku swiatla do directional
+    light.add_argument(
+        "--light-dir",
+        nargs=3,
+        type=float,
+        metavar=("X", "Y", "Z"),
+        default=[-0.2, -1.0, -0.3],
+        help="light direction",
+    )
     light.add_argument(
         "--light-color",
         nargs=3,
@@ -132,9 +142,15 @@ def main():
 
     my_model = Model(args.model, diffuse_path=args.diffuse, specular_path=args.specular)
 
-    # TODO: pendziwiatr dodaj swiatla okok??
-    light_pos = glm.vec3(*args.light_pos)
-    light_color = glm.vec3(*args.light_color)
+    if args.light != "NONE":
+        lights.add(
+            Light(
+                light_type=LIGHT_TYPES[args.light],
+                position=glm.vec3(*args.light_pos),
+                direction=glm.vec3(*args.light_dir),
+                color=glm.vec3(*args.light_color),
+            )
+        )
 
     last_frame = 0.0
 
@@ -165,8 +181,7 @@ def main():
         active_shader.set_mat4("projection", projection)
         active_shader.set_mat4("view", view)
         active_shader.set_mat4("model", model_mat)
-        active_shader.set_vec3("lightPos", light_pos)
-        active_shader.set_vec3("lightColor", light_color)
+        lights.apply(active_shader)
         active_shader.set_vec3("viewPos", camera.position)
 
         my_model.draw(active_shader)
