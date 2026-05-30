@@ -53,7 +53,7 @@ vec3 calcLight(Light light, vec3 norm, vec3 viewDir, vec3 color) {
 
     vec3 reflectDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-    float specular = spec > 0.5 ? 0.8 : 0.0;
+    float specular = (intensity > 0.0 && spec > 0.5) ? 0.8 : 0.0;
 
     return (light.color * color * quantized + specular * light.color) * spotIntensity * attenuation;
 }
