@@ -86,9 +86,9 @@ def process_input(window, delta_time):
         move.z -= 1.0
     if glfw.get_key(window, glfw.KEY_DOWN) == glfw.PRESS:
         move.z += 1.0
-    if glfw.get_key(window, glfw.KEY_R) == glfw.PRESS:
+    if glfw.get_key(window, glfw.KEY_E) == glfw.PRESS:
         move.y += 1.0
-    if glfw.get_key(window, glfw.KEY_F) == glfw.PRESS:
+    if glfw.get_key(window, glfw.KEY_Q) == glfw.PRESS:
         move.y -= 1.0
     if glm.length(move) > 0.0:
         lights.move_selected(move * delta_time * 2.0)
@@ -205,7 +205,7 @@ def main():
     print("Keys 1-3: switch shading model (Phong/Gouraud/Toon)")
     print("WSAD: move, Mouse: look around")
     print("L: add light, K: remove light, N: next light, T: change light type")
-    print("Arrows: move light on X/Z, R/F: move light up/down")
+    print("Arrows: move light on X/Z, E/Q: move light up/down")
     print("The bigger white marker is the selected light")
 
     while app_window.is_open():
