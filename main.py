@@ -14,6 +14,19 @@ first_mouse = True
 current_shader_type = "PHONG"
 
 LIGHT_TYPES = {"POINT": POINT, "DIRECTIONAL": DIRECTIONAL, "SPOT": SPOT}
+LIGHT_NAMES = ("POINT", "DIRECTIONAL", "SPOT")
+
+
+def log_selected():
+    if not lights.lights:
+        print("No lights")
+        return
+    light = lights.lights[lights.selected]
+    p = light.position
+    print(
+        f"Light {lights.selected + 1}/{len(lights.lights)}: "
+        f"{LIGHT_NAMES[light.type]} at ({p.x:.1f}, {p.y:.1f}, {p.z:.1f})"
+    )
 
 
 def mouse_callback(window, xpos, ypos):
@@ -38,6 +51,9 @@ def key_callback(window, key, scancode, action, mods):
         lights.select_next()
     elif key == glfw.KEY_T:
         lights.cycle_type()
+    else:
+        return
+    log_selected()
 
 
 def process_input(window, delta_time):
@@ -163,6 +179,7 @@ def main():
         "GOURAUD": Shader("shaders/gouraud.vert", "shaders/gouraud.frag"),
         "TOON": Shader("shaders/toon.vert", "shaders/toon.frag"),
     }
+    marker_shader = Shader("shaders/marker.vert", "shaders/marker.frag")
 
     camera.position = glm.vec3(*args.cam_pos)
     camera.movement_speed = args.speed
@@ -171,6 +188,7 @@ def main():
     camera.update_camera_vectors()
 
     my_model = Model(args.model, diffuse_path=args.diffuse, specular_path=args.specular)
+    marker_model = Model("assets/models/cube.obj")
 
     if args.light != "NONE":
         lights.add(
@@ -187,7 +205,8 @@ def main():
     print("Keys 1-3: switch shading model (Phong/Gouraud/Toon)")
     print("WSAD: move, Mouse: look around")
     print("L: add light, K: remove light, N: next light, T: change light type")
-    print("Arrows + R/F: move selected light")
+    print("Arrows: move light on X/Z, R/F: move light up/down")
+    print("The bigger white marker is the selected light")
 
     while app_window.is_open():
         current_frame = glfw.get_time()
@@ -217,6 +236,18 @@ def main():
         active_shader.set_vec3("viewPos", camera.position)
 
         my_model.draw(active_shader)
+
+        marker_shader.use()
+        marker_shader.set_mat4("projection", projection)
+        marker_shader.set_mat4("view", view)
+        for i, light in enumerate(lights.lights):
+            marker_mat = glm.translate(glm.mat4(1.0), light.position)
+            scale = 0.16 if i == lights.selected else 0.08
+            marker_mat = glm.scale(marker_mat, glm.vec3(scale, scale, scale))
+            marker_shader.set_mat4("model", marker_mat)
+            color = glm.vec3(1.0, 1.0, 1.0) if i == lights.selected else light.color
+            marker_shader.set_vec3("markerColor", color)
+            marker_model.draw(marker_shader)
 
         app_window.swap_buffers_and_poll()
 
