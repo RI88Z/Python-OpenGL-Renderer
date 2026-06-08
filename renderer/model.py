@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from PIL import Image
 from OpenGL.GL import (
@@ -28,14 +29,18 @@ class Model:
         self._load_model(obj_path, diffuse_path, specular_path)
 
     def _load_model(self, path, diffuse_path, specular_path):
+        base_dir = os.path.dirname(path)
         temp_vertices = []
         temp_uvs = []
         temp_normals = []
 
         vertex_data = []
-        indices = []
-
         unique_vertices = {}
+
+        materials = {}
+        material_indices = {}
+        current_material = "default_mat"
+        material_indices[current_material] = []
 
         print(f"Loading model: {path}...")
         with open(path, "r") as f:
@@ -43,6 +48,16 @@ class Model:
                 parts = line.strip().split()
                 if not parts:
                     continue
+
+                if parts[0] == "mtllib":
+                    mtl_path = os.path.join(base_dir, parts[1])
+                    if os.path.exists(mtl_path):
+                        materials.update(self._parse_mtl(mtl_path))
+
+                elif parts[0] == "usemtl":
+                    current_material = parts[1]
+                    if current_material not in material_indices:
+                        material_indices[current_material] = []
 
                 if parts[0] == "v":
                     temp_vertices.append([float(x) for x in parts[1:4]])
@@ -81,21 +96,66 @@ class Model:
                                 unique_vertices[vertex_str] = len(unique_vertices)
                                 vertex_data.extend(pos + norm + uv)
 
-                            indices.append(unique_vertices[vertex_str])
+                            material_indices[current_material].append(
+                                unique_vertices[vertex_str]
+                            )
 
         np_vertices = np.array(vertex_data, dtype=np.float32)
-        np_indices = np.array(indices, dtype=np.uint32)
 
-        textures = []
-        if diffuse_path:
-            diff_id = self._load_texture(diffuse_path)
-            textures.append({"id": diff_id, "type": "texture_diffuse"})
-        if specular_path:
-            spec_id = self._load_texture(specular_path)
-            textures.append({"id": spec_id, "type": "texture_specular"})
+        for mat_name, indices in material_indices.items():
+            if len(indices) == 0:
+                continue
 
-        self.meshes.append(Mesh(np_vertices, np_indices, textures))
+            np_indices = np.array(indices, dtype=np.uint32)
+            textures = []
+
+            mat = materials.get(mat_name, {})
+            diff_map = mat.get("diffuse") or diffuse_path
+            spec_map = mat.get("specular") or specular_path
+
+            if diff_map:
+                d_path = (
+                    diff_map
+                    if os.path.exists(diff_map)
+                    else os.path.join(base_dir, diff_map)
+                )
+                diff_id = self._load_texture(d_path)
+                textures.append({"id": diff_id, "type": "texture_diffuse"})
+
+            if spec_map:
+                s_path = (
+                    spec_map
+                    if os.path.exists(spec_map)
+                    else os.path.join(base_dir, spec_map)
+                )
+                spec_id = self._load_texture(s_path)
+                textures.append({"id": spec_id, "type": "texture_specular"})
+
+            self.meshes.append(Mesh(np_vertices, np_indices, textures))
+
         print("Model loaded successfully.")
+
+    def _parse_mtl(self, mtl_path):
+        materials = {}
+        current_mat = None
+        try:
+            with open(mtl_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split()
+                    if not parts:
+                        continue
+
+                    if parts[0] == "newmtl":
+                        current_mat = parts[1]
+                        materials[current_mat] = {}
+                    elif parts[0] == "map_Kd" and current_mat is not None:
+                        materials[current_mat]["diffuse"] = parts[1]
+                    elif parts[0] == "map_Ks" and current_mat is not None:
+                        materials[current_mat]["specular"] = parts[1]
+        except Exception as e:
+            print(f"Failed to parse mtl file {mtl_path}: {e}")
+
+        return materials
 
     def _load_texture(self, path):
         texture_id = glGenTextures(1)

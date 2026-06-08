@@ -118,7 +118,7 @@ def parse_args():
     model.add_argument("--model", required=True, help="model file path")
 
     texture = parser.add_argument_group("Textures")
-    texture.add_argument("--diffuse", required=True, help="diffuse texture path")
+    texture.add_argument("--diffuse", default=None, help="diffuse texture path")
     texture.add_argument("--specular", default=None, help="specular texture path")
 
     light = parser.add_argument_group("Lights")
